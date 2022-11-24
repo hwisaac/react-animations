@@ -337,3 +337,188 @@ function App() {
   );
 }
 ```
+
+##
+
+### prop: while블라블라
+
+- `whileDrag` 드래그 하는 동안 애니메이션
+- `whileFocus`
+- `whileHover` 마우스를 올리면 애니메이션
+- `whileInView`
+- `whileTap` 클릭하면 애니메이션
+
+```javascript
+const Box = styled(motion.div)`
+  width: 200px;
+  height: 200px;
+  background-color: rgba(255, 255, 255, 1);
+  border-radius: 15px;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1), 0 10px 20px rgba(0, 0, 0, 0.06);
+`;
+
+function App() {
+  return (
+    <Wrapper>
+      <Box
+        whileHover={{ scale: 1.5, rotateZ: 90 }}
+        whileTap={{ scale: 1, borderRadius: "100px" }}
+      />
+    </Wrapper>
+  );
+}
+```
+
+#### variants 도 같이 써보기
+
+```javascript
+const boxVariants = {
+  hover: { scale: 1.5, rotateZ: 90 },
+  click: { scale: 1, borderRadius: "100px" },
+};
+
+function App() {
+  return (
+    <Wrapper>
+      <Box variants={boxVariants} whileHover={"hover"} whileTap={"click"} />
+    </Wrapper>
+  );
+}
+```
+
+## drag 기능 구현하기
+
+- `drag` prop 만 추가하면 된다.
+
+```javascript
+function App() {
+  return (
+    <Wrapper>
+      <Box drag />
+    </Wrapper>
+  );
+}
+```
+
+#### 색상 변경 animate
+
+- `whileDrag = {{backgroundColor: "blue}}` 로하면 색상이 `string` 이기 때문에 드래그 하자마자 blue로 바뀌는 문제 -> rgb 값으로 숫자를 넣어주면 자연스럽게 transition 할 수 있다.
+
+```javascript
+function App() {
+  return (
+    <Wrapper>
+      <Box drag whileDrag={{ backgroundColor: "rgb(46,204,113)" }} />
+    </Wrapper>
+  );
+}
+```
+
+#### drag 에 제약기능 넣기
+
+- `<Box drag />` : 어느 방향으로나 드래그 가능. 제약 없음
+- `<Box drag='x' />` : 좌우(x좌표)로만 이동시키기
+- `<Box drag dragConstraints={{top:-50, bottom:50, left:-50, right: 50}} />` : 드래그 가능한 영역 정해주기 (제약을 넘어간 곳에서 놓을시 제자리로 돌아감)
+- - `<Box drag dragConstraints={{top:-50, bottom:50, left:-50, right: 50}} />` : 드래그를 놓으면 원래 자리로 돌아감
+
+#### drag 박스를 박스안에 넣어서 제약하기
+
+1. 방법1. BiggerBox 를 만들어서 Box를 감싸고, dragConstraints를 정해준다.
+
+```javascript
+const BiggerBox = styled.div`
+  width: 600px;
+  height: 600px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+`;
+<BiggerBox>
+  <Box
+    drag
+    dragConstraints={{ top: -200, bottom: 200, left: -200, right: 200 }}
+    variants={boxVariants}
+    whileHover={"hover"}
+    whileTap={"click"}
+    whileDrag={"drag"}
+  />
+</BiggerBox>;
+```
+
+- 추천방법: `ref` 를 사용한다. (코드로 특정 element 를 잡아줌)
+- 부모 박스에 ref 를 만들어주고, 자식박스에 dragConstraints로 ref를 넣어준다.
+
+```javascript
+import { useRef } from "react";
+
+function App() {
+  const biggerBoxRef = useRef < HTMLDivElement > null;
+  return (
+    <Wrapper>
+      <BiggerBox ref={biggerBoxRef}>
+        <Box
+          drag
+          dragConstraints={biggerBoxRef}
+          variants={boxVariants}
+          whileDrag={"drag"}
+        />
+      </BiggerBox>
+    </Wrapper>
+  );
+}
+```
+
+#### `dragSnapToOrigin` 드래그 풀면 처음 위치로 돌아가게 하기
+
+- `dragSnapToOrigin` prop 을 넣어주면 드래그를 풀때 처음 위치로 돌아간다.
+
+```javascript
+import { useRef } from "react";
+
+function App() {
+  const biggerBoxRef = useRef < HTMLDivElement > null;
+  return (
+    <Wrapper>
+      <BiggerBox ref={biggerBoxRef}>
+        <Box
+          drag
+          dragSnapToOrigin
+          dragConstraints={biggerBoxRef}
+          variants={boxVariants}
+          whileDrag={"drag"}
+        />
+      </BiggerBox>
+    </Wrapper>
+  );
+}
+```
+
+#### prop: `dragElastic`
+
+- `dragElastic` 의 값은 0~1 사이 (기본값은 0.5)
+- 드래그시 마우스와 박스가 고무줄처럼 움직이게 하는 값이다.
+- 1 값이면 constraint 영역을 넘어가도 박스와 마우스가 정확히 일치해서 움직인다.
+- 0 값이면 constraint 된 값 안에서 정확히 머무르며 마우스와 박스가 일치해 있다.
+
+```javascript
+function App() {
+  const biggerBoxRef = useRef < HTMLDivElement > null;
+  return (
+    <Wrapper>
+      <BiggerBox ref={biggerBoxRef}>
+        <Box
+          drag
+          dragSnapToOrigin
+          dragElastic={0.7}
+          dragConstraints={biggerBoxRef}
+          variants={boxVariants}
+          whileDrag={"drag"}
+        />
+      </BiggerBox>
+    </Wrapper>
+  );
+}
+```
