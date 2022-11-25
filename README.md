@@ -624,3 +624,271 @@ function App() {
 - `{scrollX, scrollY, scrollXProgress, scrollYProgress }` 오브젝트를 반환한다.
 - `scrollX, scrollY` 는 픽셀 단위의 거리
 - `scrollXProgress, scrollYProgress` 는 0~1사이의 값
+
+## AnimatePresence
+
+- `AnimatePresence` 컴포넌트는 react js app 에서 사라지는 컴포넌트를 애니메이트 한다.
+- `AnimatePresence` 컴포넌트는 자식이 사라지거나(null), 나타날 때 애니메이션 효과를 일으키는 컴포넌트이다.
+- 오브젝트를 랜더링하거나 없앨때 애니메이트 하고 싶을 때 이 컴포넌트를 사용한다.
+- `visible` 이어야 한다.
+- `조건문 children` 이 있어야 한다. (보여주거나 보여주지 않을 조건)
+
+```javascript
+//잘못된 방식. (항상 Visible이어야 하므로)
+{
+  showing ? (
+    <AnimatePresence>
+      <Box />
+    </AnimatePresence>
+  ) : null;
+}
+
+// 옳은 방식
+<AnimatePresence>{showing ? <Box /> : null}</AnimatePresence>;
+```
+
+```javascript
+// App.tsx
+import styled from "styled-components";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+
+const Wrapper = styled(motion.div)`
+  height: 200vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const Box = styled(motion.div)`
+  width: 400px;
+  height: 200px;
+  background-color: rgba(255, 255, 255, 1);
+  border-radius: 40px;
+  position: absolute;
+  top: 100px;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1), 0 10px 20px rgba(0, 0, 0, 0.06);
+`;
+
+const boxVariants = {
+  initial: {
+    opacity: 0,
+    scale: 0,
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    rotateZ: 360,
+  },
+  leaving: {
+    opacity: 0,
+    scale: 0,
+    y: 50,
+  },
+};
+
+function App() {
+  const [showing, setShowing] = useState(false);
+  const toggleShowing = () => setShowing((prev) => !prev);
+
+  return (
+    <Wrapper>
+      <button onClick={toggleShowing}>Click</button>
+      <AnimatePresence>
+        {showing ? (
+          <Box
+            variants={boxVariants}
+            initial='initial'
+            animate='visible'
+            exit='leaving'
+          />
+        ) : null}
+      </AnimatePresence>
+    </Wrapper>
+  );
+}
+```
+
+#### `exit` state
+
+- exit 에 설정한 style 은 해당 element 가 어떤 애니메이셔을 발생시킬지 정한다.
+
+```javascript
+
+```
+
+#### AnimatePresence 컴포넌트로 슬라이더 만들기
+
+1. 박스들을 만든다
+
+```javascript
+function App() {
+  const [visible, setVisible] = useState(1);
+  const nextPlease = () => setVisible((prev) => (prev === 10 ? 10 : prev + 1));
+  const prevPlease = () => setVisible((prev) => (prev === 1 ? 1 : prev - 1));
+  return (
+    <Wrapper>
+      <AnimatePresence>
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) =>
+          i === visible ? ( // visible 과 i값이 일치하는 박스만 보여준다.
+            <Box key={i}>{i}</Box>
+          ) : null
+        )}
+      </AnimatePresence>
+      <button onClick={nextPlease}>next</button>
+      <button onClick={prevPlease}>prev</button>
+    </Wrapper>
+  );
+}
+```
+
+2. 애니메이션을 추가해준다.
+
+```javascript
+const box = {
+  invisible: {
+    x: 500,
+    opacity: 0,
+    scale: 0,
+  },
+  visible: {
+    x: 0,
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 1,
+    },
+  },
+  exit: { x: -500, opacity: 0, scale: 0, transition: { duration: 1 } },
+};
+
+// 박스 prop 수정
+<AnimatePresence>
+  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) =>
+    i === visible ? (
+      <Box
+        variants={box}
+        initial='invisible'
+        animate='visible'
+        exit='exit'
+        key={i}>
+        {i}
+      </Box>
+    ) : null
+  )}
+</AnimatePresence>;
+```
+
+#### key
+
+- 리액트는 key 를 통해 각 box 가 고유하다고 생각한다.
+- 만약 key 를 바꾸면 react js 는 이전 element 가 없어지고 새로운 element 가 생겨났다고 생각한다.
+- 이것을 슬라이더에 적용하면, key를 바꿈으로써 react js는 컴포넌트를 re-render 하고 `AnimatePresence` 는 새로 생기고 없어지는 것에 애니메이트를 구현하게 된다.
+
+```javascript
+const [visible, setVisible] = useState(1);
+const nextPlease = () => setVisible((prev) => (prev === 10 ? 10 : prev + 1));
+const prevPlease = () => setVisible((prev) => (prev === 1 ? 1 : prev - 1));
+
+<AnimatePresence>
+  // key= {i} 대신 key={visible}
+  // visible 을 바꾸면 박스가 없어지고 새로 생겨나는 것이 되고
+  <Box
+    variants={box}
+    initial='invisible'
+    animate='visible'
+    exit='exit'
+    key={visible}>
+    {visible}
+  </Box>
+</AnimatePresence>;
+```
+
+#### 슬라이더 prev 기능 구현하기
+
+- 효과를 구현할 방향에 대해서 invisible 과 exit을 바꾸면 된다.
+- `custom` prop 을 사용하자!
+- custom 에는 무엇이든 쓸 수 있다.
+- custom 으로 variants 를 바꿀 수 있다 : variant 의 value 를 객체를 리턴하는 함수로 바꿔야 한다.
+- custom 의 prop 으로부터 variant 의 value 의 인자로 전달된다.
+
+```javascript
+const box = {
+  entry: (isBack: boolean) => ({
+    // 이 argument 는 custom = {back} 프롭에서 온다. 값에 따라 방향이 정해짐
+    x: isBack ? -500 : 500,
+    opacity: 0,
+    scale: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 1,
+    },
+  },
+  exit: (back: boolean) => ({
+    x: isBack ? 500 : -500,
+    opacity: 0,
+    scale: 0,
+    transition: { duration: 1 },
+  }),
+};
+
+function App() {
+  const [visible, setVisible] = useState(1);
+  const [back, setBack] = useState(false);
+  // 버튼으로 back 스테이트의 값을 바꾸고, back 의 값을 custom 프롭을 통해 variant로 전달을 하고, 원하는 애니메이트를 한다.
+  const nextPlease = () => {
+    setBack(false);
+    setVisible((prev) => (prev === 10 ? 10 : prev + 1));
+  };
+  const prevPlease = () => {
+    setBack(true);
+    setVisible((prev) => (prev === 1 ? 1 : prev - 1));
+  };
+
+  return (
+    <Wrapper>
+      <AnimatePresence custom={back}>
+        // motion 의 규칙에 따라 여기에도 custom={back} 을 넣어야 한다.
+        <Box
+          custom={back} // 이 prop 이 variant 로 전달된다.
+          variants={box}
+          initial='entry'
+          animate='center'
+          exit='exit'
+          key={visible}>
+          {visible}
+        </Box>
+      </AnimatePresence>
+      <button onClick={nextPlease}>next</button>
+      <button onClick={prevPlease}>prev</button>
+    </Wrapper>
+  );
+}
+```
+
+#### `exitBeforeEnter`
+
+- 기본적으로 이전 요소가 사라지면서(exit) 다음 요소가 생겨나는(initial) 애니메이션이 동시에 실행되는데, `exitBeforeEnter` 프롭을 `AnimatePresence` 에 추가하면 exit 이 끝난 이후에 다음 inital 이 실행된다.
+
+```javascript
+<Wrapper>
+  <AnimatePresence custom={back} exitBeforeEnter>
+    <Box
+      custom={back}
+      variants={box}
+      initial='entry'
+      animate='center'
+      exit='exit'
+      key={visible}>
+      {visible}
+    </Box>
+  </AnimatePresence>
+  <button onClick={nextPlease}>next</button>
+  <button onClick={prevPlease}>prev</button>
+</Wrapper>
+```
