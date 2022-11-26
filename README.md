@@ -892,3 +892,38 @@ function App() {
   <button onClick={prevPlease}>prev</button>
 </Wrapper>
 ```
+
+## 8.14 layout 프롭
+
+- `layout` 프롭을 제공하면, 레이아웃이 변경될때마다 애니메이션이 적용된다. (css가 변경되는 것들에 대해 자연스럽게 애니메이션이 적용됨)
+
+```javascript
+<Wrapper onClick={toggleClicked}>
+  <Box
+    style={{
+      justifyContent: clicked ? "center" : "flex-start",
+      alignItems: clicked ? "center" : "flex-start",
+    }}>
+    <Circle layout />
+  </Box>
+</Wrapper>
+```
+
+### shared layout : `layoutId` 프롭
+
+- 서로다른 컴포넌트가 `layoutId` 값을 공유 하면, 두 요소를 동일한 것으로 취급해서 애니메이트를 적용한다.
+
+```javascript
+<Wrapper onClick={toggleClicked}>
+  <Box>
+    {!clicked ? (
+      <Circle layoutId='circle' style={{ borderRadius: 50 }} />
+    ) : null}
+  </Box>
+  <Box>
+    {clicked ? (
+      <Circle layoutId='circle' style={{ borderRadius: 0, scale: 2 }} />
+    ) : null}
+  </Box>
+</Wrapper>
+```
