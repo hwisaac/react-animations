@@ -927,3 +927,37 @@ function App() {
   </Box>
 </Wrapper>
 ```
+
+## `layoutId` 이용해서 : 모달 만들기
+
+- 박스를 클릭하면 박스에 해당하는 id state 가 되고, 오버레이를 클릭하면 id 는 null 이 된다.
+- `{id ? <Overlay><Box layoutId={id}/></Overlay> : null}` 를 통해 id값이 있으면 오버레이와 박스를 나타나게 한다.
+- 클릭할 때 새로 생겨나는 박스와 layoutId 값을 일치 시켜준다.
+- 그러면 `AnimatePresence` 가 애니메이션을 적용시킨다.
+
+```javascript
+function App() {
+  const [id, setId] = (useState < null) | (string > null);
+  return (
+    <Wrapper>
+      <Grid>
+        {["1", "2", "3", "4"].map((n) => (
+          <Box onClick={() => setId(n)} key={n} layoutId={n} />
+        ))}
+      </Grid>
+      <AnimatePresence>
+        {id ? (
+          <Overlay
+            variants={overlay}
+            onClick={() => setId(null)}
+            initial='hidden'
+            animate='visible'
+            exit='exit'>
+            <Box layoutId={id} style={{ width: 400, height: 200 }} />
+          </Overlay>
+        ) : null}
+      </AnimatePresence>
+    </Wrapper>
+  );
+}
+```
