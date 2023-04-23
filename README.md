@@ -1,3 +1,5 @@
+![react-animations](https://user-images.githubusercontent.com/54179672/233815605-91e39e9c-3043-4844-bb0a-b95c20de51ef.gif)
+
 ## react-animations
 
 - `npx create-react-app react-animations --template typescript`
